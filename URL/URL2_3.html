@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 每日資訊看板</title>
+<style>
+  :root{
+    --bg:#f5f7fb;
+    --card-bg:#ffffff;
+    --ink:#1a1d29;
+    --sub:#5b6072;
+    --line:#e6e9f0;
+    --blue:#3b6ef0;
+    --blue-soft:#eaf0ff;
+    --purple:#7c5cff;
+    --purple-soft:#f1edff;
+    --teal:#0fb8a3;
+    --teal-soft:#e5f9f6;
+    --shadow:0 2px 10px rgba(20,25,50,0.06);
+    --shadow-hover:0 10px 26px rgba(20,25,50,0.12);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;
+    background:linear-gradient(180deg,#f0f4ff 0%,#f5f7fb 220px,var(--bg) 100%);
+    color:var(--ink);
+  }
+  header{
+    max-width:1180px;
+    margin:0 auto;
+    padding:40px 24px 20px;
+    text-align:center;
+  }
+  header h1{
+    font-size:34px;
+    font-weight:800;
+    margin:0 0 8px;
+    letter-spacing:0.5px;
+    background:linear-gradient(90deg,#3b6ef0,#7c5cff);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  header .date{
+    font-size:14px;
+    color:var(--sub);
+    background:#fff;
+    display:inline-block;
+    padding:6px 16px;
+    border-radius:999px;
+    box-shadow:var(--shadow);
+    border:1px solid var(--line);
+  }
+  .toolbar{
+    max-width:1180px;
+    margin:20px auto 0;
+    padding:0 24px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .toolbar button{
+    border:1px solid var(--line);
+    background:#fff;
+    color:var(--sub);
+    font-size:13px;
+    font-weight:600;
+    padding:8px 16px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .toolbar button:hover{border-color:var(--blue);color:var(--blue);}
+  .toolbar button.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 24px 60px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:22px;
+  }
+  section.board{
+    background:transparent;
+    display:flex;
+    flex-direction:column;
+    min-width:0;
+  }
+  .board-header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .board-icon{
+    width:36px;height:36px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;flex-shrink:0;
+  }
+  .board-title{font-size:17px;font-weight:800;}
+  .board-count{
+    margin-left:auto;
+    font-size:12px;
+    color:var(--sub);
+    background:#fff;
+    border:1px solid var(--line);
+    padding:2px 10px;
+    border-radius:999px;
+  }
+  .tech .board-icon{background:var(--blue-soft);color:var(--blue);}
+  .opinion .board-icon{background:var(--purple-soft);color:var(--purple);}
+  .product .board-icon{background:var(--teal-soft);color:var(--teal);}
+
+  .cards{display:flex;flex-direction:column;gap:12px;}
+  .card{
+    background:var(--card-bg);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 18px;
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    position:relative;
+  }
+  .card:hover{
+    transform:translateY(-3px);
+    box-shadow:var(--shadow-hover);
+  }
+  .tech .card{border-left:4px solid var(--blue);}
+  .opinion .card{border-left:4px solid var(--purple);}
+  .product .card{border-left:4px solid var(--teal);}
+
+  .card-title{
+    font-size:15px;
+    font-weight:700;
+    line-height:1.45;
+    margin:0 0 8px;
+    color:var(--ink);
+  }
+  .card-meta{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    color:var(--sub);
+    margin-bottom:8px;
+    flex-wrap:wrap;
+  }
+  .source-tag{
+    font-weight:700;
+    color:var(--blue);
+    background:var(--blue-soft);
+    padding:2px 8px;
+    border-radius:6px;
+  }
+  .opinion .source-tag{color:var(--purple);background:var(--purple-soft);}
+  .product .source-tag{color:var(--teal);background:var(--teal-soft);}
+  .dot{opacity:.5;}
+  .card-summary{
+    font-size:13.5px;
+    color:#3a3f52;
+    line-height:1.6;
+    margin:0;
+  }
+  .card-link{
+    display:inline-block;
+    margin-top:10px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--blue);
+    text-decoration:none;
+  }
+  .opinion .card-link{color:var(--purple);}
+  .product .card-link{color:var(--teal);}
+  .card-link:hover{text-decoration:underline;}
+
+  .empty{
+    background:#fff;
+    border:1px dashed var(--line);
+    border-radius:14px;
+    padding:36px 18px;
+    text-align:center;
+    color:var(--sub);
+    font-size:14px;
+  }
+
+  footer{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 24px 40px;
+    text-align:center;
+    font-size:12px;
+    color:#9aa0b4;
+  }
+
+  @media (max-width:920px){
+    main{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AI 每日資訊看板</h1>
+  <div class="date">📅 資料更新日期：2026-07-09　｜　涵蓋範圍：2026-07-02 至 2026-07-09</div>
+</header>
+
+<div class="toolbar">
+  <button class="filter-btn active" data-target="all">全部</button>
+  <button class="filter-btn" data-target="tech">技術更新</button>
+  <button class="filter-btn" data-target="opinion">各界看法</button>
+  <button class="filter-btn" data-target="product">新產品介紹</button>
+</div>
+
+<main>
+
+  <section class="board tech" data-section="tech">
+    <div class="board-header">
+      <div class="board-icon">⚙️</div>
+      <div class="board-title">各家推出的技術更新</div>
+      <div class="board-count">5 則</div>
+    </div>
+    <div class="cards">
+
+      <a class="card" href="https://dataconomy.com/2026/07/08/openai-gpt-5-6-launch-july-9/" target="_blank" rel="noopener">
+        <p class="card-title">OpenAI Gains Approval To Release GPT-5.6 Globally On July 9</p>
+        <div class="card-meta"><span class="source-tag">Dataconomy</span><span class="dot">•</span><span>2026-07-08</span></div>
+        <p class="card-summary">OpenAI 宣布 GPT-5.6 系列模型（Sol、Terra、Luna）將於 7 月 9 日全面公開發布，新增更強的深度推理能力與多代理協作的「Ultra 模式」。</p>
+      </a>
+
+      <a class="card" href="https://techcrunch.com/2026/07/08/openai-releases-new-voice-models-for-more-natural-live-conversations/" target="_blank" rel="noopener">
+        <p class="card-title">OpenAI releases new voice models for more natural live conversations</p>
+        <div class="card-meta"><span class="source-tag">TechCrunch</span><span class="dot">•</span><span>2026-07-08</span></div>
+        <p class="card-summary">OpenAI 推出新一代語音模型 GPT-Live，取代原本的 ChatGPT 語音功能，讓對話能像真人一樣同時聆聽與說話、隨時被打斷插話。</p>
+      </a>
+
+      <a class="card" href="https://www.techtimes.com/articles/319877/20260708/gemini-35-pro-targets-july-17-deepseeks-july-24-deadline-hits-developers-now.htm" target="_blank" rel="noopener">
+        <p class="card-title">Gemini 3.5 Pro Targets July 17 as DeepSeek's July 24 Deadline Hits Developers Now</p>
+        <div class="card-meta"><span class="source-tag">Tech Times</span><span class="dot">•</span><span>2026-07-08</span></div>
+        <p class="card-summary">Google 因決定重建模型架構，將 Gemini 3.5 Pro 的推出時間延後至 7 月 17 日，新版將具備 200 萬字元的超長上下文與更強的數學推理能力。</p>
+      </a>
+
+      <a class="card" href="https://9to5mac.com/2026/07/07/anthropic-expanding-claude-cowork-to-mobile-and-web-details-here/" target="_blank" rel="noopener">
+        <p class="card-title">Anthropic expanding Claude Cowork to mobile and web, details here</p>
+        <div class="card-meta"><span class="source-tag">9to5Mac</span><span class="dot">•</span><span>2026-07-07</span></div>
+        <p class="card-summary">Anthropic 宣布將 Claude Cowork 功能擴展到手機與網頁版，使用者可跨裝置同步檔案與對話紀錄，並新增可直接寄信、管理行事曆與編輯 Microsoft 365 檔案的能力。</p>
+      </a>
+
+      <a class="card" href="https://github.com/openclaw/openclaw/releases/tag/v2026.7.1-beta.2" target="_blank" rel="noopener">
+        <p class="card-title">Release openclaw 2026.7.1-beta.2</p>
+        <div class="card-meta"><span class="source-tag">GitHub (OpenClaw Releases)</span><span class="dot">•</span><span>2026-07-05</span></div>
+        <p class="card-summary">開源 AI 助理工具 OpenClaw 發布 2026.7.1-beta.2 版本，正式支援 OpenAI 最新的 GPT-5.6 模型，並新增外部工作階段接續、Telegram 遠端操控等功能。</p>
+      </a>
+
+    </div>
+  </section>
+
+  <section class="board opinion" data-section="opinion">
+    <div class="board-header">
+      <div class="board-icon">💬</div>
+      <div class="board-title">各界看法</div>
+      <div class="board-count">5 則</div>
+    </div>
+    <div class="cards">
+
+      <a class="card" href="https://radicaldatascience.wordpress.com/2026/07/08/ai-news-briefs-bulletin-board-for-july-2026/" target="_blank" rel="noopener">
+        <p class="card-title">AI News Briefs BULLETIN BOARD for July 2026</p>
+        <div class="card-meta"><span class="source-tag">Radical Data Science</span><span class="dot">•</span><span>2026-07-08</span></div>
+        <p class="card-summary">這篇部落格彙整了本週 AI 產業的重要動態與觀察，用淺顯方式解讀深度學習、生成式 AI 等領域的最新趨勢，適合入門讀者快速掌握重點。</p>
+      </a>
+
+      <a class="card" href="https://ai-weekly.ai/newsletter-07-07-2026/" target="_blank" rel="noopener">
+        <p class="card-title">AI-Weekly for Tuesday, July 7, 2026 - Issue 224</p>
+        <div class="card-meta"><span class="source-tag">AI-Weekly</span><span class="dot">•</span><span>2026-07-07</span></div>
+        <p class="card-summary">這期 AI 週報整理了本週各大 AI 公司的新聞與產業評論，幫助讀者用最短時間了解 AI 領域正在發生的重要變化。</p>
+      </a>
+
+      <a class="card" href="https://emergingai.substack.com/p/claude-changed-the-july-2026-way" target="_blank" rel="noopener">
+        <p class="card-title">Claude Changed: The July 2026 Way to Use it</p>
+        <div class="card-meta"><span class="source-tag">Opinion AI（Substack）</span><span class="dot">•</span><span>2026-07-05</span></div>
+        <p class="card-summary">作者以評論角度指出，2026 年使用 Claude 的關鍵已不再是選擇哪個模型，而是如何善用專案、技能、連接器等整套工作系統，內容以初學者也能理解的方式說明。</p>
+      </a>
+
+      <a class="card" href="https://dailyaidigest.net/archive/2026/07/05/" target="_blank" rel="noopener">
+        <p class="card-title">AI News Briefing, July 5, 2026: D.A.D. Week In Review</p>
+        <div class="card-meta"><span class="source-tag">Daily AI Digest</span><span class="dot">•</span><span>2026-07-05</span></div>
+        <p class="card-summary">這份每日 AI 簡報以一週回顧形式，用平易近人的語言總結近期 AI 新聞重點，方便一般讀者掌握產業動態。</p>
+      </a>
+
+      <a class="card" href="https://www.youtube.com/watch?v=FFz3iOBVldY" target="_blank" rel="noopener">
+        <p class="card-title">Exciting AI Updates Weekly - July 03, 2026</p>
+        <div class="card-meta"><span class="source-tag">Lev Selector（YouTube 頻道）</span><span class="dot">•</span><span>2026-07-03</span></div>
+        <p class="card-summary">這支 YouTube 影片以輕鬆口吻整理一週內的 AI 工具與模型更新，用簡單範例向新手介紹這些技術的實際用途。</p>
+      </a>
+
+    </div>
+  </section>
+
+  <section class="board product" data-section="product">
+    <div class="board-header">
+      <div class="board-icon">🚀</div>
+      <div class="board-title">新產品的介紹</div>
+      <div class="board-count">5 則</div>
+    </div>
+    <div class="cards">
+
+      <a class="card" href="https://9to5google.com/2026/07/08/google-photos-video-remix/" target="_blank" rel="noopener">
+        <p class="card-title">Google Photos rolling out 'Video Remix' powered by Gemini Omni</p>
+        <div class="card-meta"><span class="source-tag">9to5Google</span><span class="dot">•</span><span>2026-07-08</span></div>
+        <p class="card-summary">Google Photos 新增「Video Remix」功能，使用者只要選擇一段 10 秒內的影片，套用像是「水彩畫風」或「早晨光線」等範本，幾秒鐘內就能變成風格化短片。</p>
+      </a>
+
+      <a class="card" href="https://techcrunch.com/2026/07/07/meta-rolls-out-muse-a-new-ai-image-generator/" target="_blank" rel="noopener">
+        <p class="card-title">Meta just launched a new AI generator, Muse Image</p>
+        <div class="card-meta"><span class="source-tag">TechCrunch</span><span class="dot">•</span><span>2026-07-07</span></div>
+        <p class="card-summary">Meta 推出全新自研圖像生成模型「Muse Image」，免費整合進 Meta AI App、WhatsApp 和 Instagram 限時動態，輸入一句話就能生成並用畫筆局部修改。</p>
+      </a>
+
+      <a class="card" href="https://www.techtimes.com/articles/319754/20260705/hermes-moa-20-combines-gpt-claude-deepseek-outscore-any-one-model.htm" target="_blank" rel="noopener">
+        <p class="card-title">Hermes MoA 2.0 Combines GPT, Claude and DeepSeek to Outscore Any One Model</p>
+        <div class="card-meta"><span class="source-tag">Tech Times</span><span class="dot">•</span><span>2026-07-05</span></div>
+        <p class="card-summary">開源 AI 代理人框架 Hermes Agent 推出「Mixture of Agents 2.0」，讓使用者選擇一個結合 GPT、Claude、DeepSeek 等多模型的「虛擬模型」，自動整合出更好的回答。</p>
+      </a>
+
+      <a class="card" href="https://www.techtimes.com/articles/319707/20260704/ai-coding-assistant-zcode-launches-free-china-data-law-applies-every-glm-52-api-call.htm" target="_blank" rel="noopener">
+        <p class="card-title">AI Coding Assistant ZCode Launches Free</p>
+        <div class="card-meta"><span class="source-tag">Tech Times</span><span class="dot">•</span><span>2026-07-04</span></div>
+        <p class="card-summary">中國 AI 公司 Z.ai 推出免費桌面版程式設計工具「ZCode」，支援 Mac、Windows、Linux 安裝，新手只要用文字描述需求，AI 代理人就能自動完成程式修改。</p>
+      </a>
+
+      <a class="card" href="https://techcrunch.com/2026/07/02/meta-quietly-launches-vibe-coded-gaming-app-pocket/" target="_blank" rel="noopener">
+        <p class="card-title">Meta quietly launches vibe-coded gaming app Pocket</p>
+        <div class="card-meta"><span class="source-tag">TechCrunch</span><span class="dot">•</span><span>2026-07-02</span></div>
+        <p class="card-summary">Meta 悄悄上線 AI 遊戲生成 App「Pocket」，使用者只需輸入文字描述，AI 就能自動產生可互動的小遊戲，完全不需要寫程式，適合新手嘗試創作。</p>
+      </a>
+
+    </div>
+  </section>
+
+</main>
+
+<footer>AI 每日資訊看板　由 3 個搜尋 Agent 自動彙整　｜　點擊卡片可開啟原文連結</footer>
+
+<script>
+  const buttons = document.querySelectorAll('.filter-btn');
+  const boards = document.querySelectorAll('.board');
+  buttons.forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      buttons.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const target = btn.dataset.target;
+      boards.forEach(b=>{
+        if(target==='all' || b.dataset.section===target){
+          b.style.display='flex';
+        } else {
+          b.style.display='none';
+        }
+      });
+      document.querySelector('main').style.gridTemplateColumns =
+        target==='all' ? 'repeat(3,1fr)' : '1fr';
+    });
+  });
+</script>
+
+</body>
+</html>
